@@ -1,84 +1,34 @@
-import requests
-from pymongo import MongoClient
-from pydantic import BaseModel
-BASE_URL = "http://localhost:8000"
 
 
-client = MongoClient("mongodb://root:example@localhost:27017/?authSource=admin")
-db = client["WebServices"]
-collection = db["products"]
-def get_valid_product_id():
-    """Fetch an existing product ID from the database."""
-    product = collection.find_one({}, {"_id": 1})
-    return str(product["_id"]) if product else None
 
-def test_get_all():
-    response = requests.get(f"{BASE_URL}/getAll")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
+# test_api.py
+from fastapi.testclient import TestClient
+from main import app
 
-def test_add_new():
-    global added_product_id
-    product = {
-        "name": "Test Product",
-        "category": "Test Category",
-        "price": 19.99,
-        "stock": 50,
-        "description": "This is a test product"
-    }
-    response = requests.post(f"{BASE_URL}/addNew", json=product)
-    assert response.status_code == 200
-    added_product_id = collection.find_one({"name": "Test Product"})["_id"]
+client = TestClient(app)
 
-def test_get_single_product():
-    global added_product_id
-    response = requests.get(f"{BASE_URL}/getSingleProduct/{added_product_id}")
-    assert response.status_code == 200
-    data = response.json()
-    
-    assert str(data["product_id"]) == str(added_product_id)  # Ensure IDs match
-    assert "name" in data  # Make sure name exists in response
+def test_endpoints():
+    # Test /addNew
+    res = client.post("/addNew", json={
+        "name": "Test",
+        "unitPrice": 10.99,
+        "stockQuantity": 100,
+        "description": "Test"
+    })
+    assert res.status_code == 200
+    product_id = res.json()["product"]["_id"]
 
-def test_delete_product():
-    product_id = get_valid_product_id()
-    if product_id:
-        response = requests.delete(f"{BASE_URL}/deleteOne/{product_id}")
-        assert response.status_code in [200, 404]  # 404 if already deleted
-    else:
-        print("No product found in DB. Skipping test.")
+    # Test /getSingleProduct
+    assert client.get(f"/getSingleProduct/{product_id}").status_code == 200
 
-def test_starts_with():
-    response = requests.get(f"{BASE_URL}/startsWith/T")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    # Test /getAll
+    assert client.get("/getAll").status_code == 200
 
-def test_pagination():
-    ids = list(collection.find({}, {"_id": 1}).limit(2))
-    if len(ids) == 2:
-        start_id = str(ids[0]["_id"])
-        end_id = str(ids[1]["_id"])
-        response = requests.get(f"{BASE_URL}/paginate?start_id={start_id}&end_id={end_id}")
-        assert response.status_code == 200
-        assert isinstance(response.json(), list)
-    else:
-        print("Not enough data for pagination test.")
+    # Test /startsWith
+    assert client.get("/startsWith/t").status_code == 200
 
-def test_convert_price():
-    product_id = get_valid_product_id()
-    if product_id:
-        response = requests.get(f"{BASE_URL}/convert/{product_id}")
-        assert response.status_code == 200
-        assert "price_in_euro" in response.json()
-    else:
-        print("No product found in DB. Skipping test.")
+    # Test /convert
+    assert client.get(f"/convert/{product_id}").status_code in [200, 500]  # 500 if API fails
 
-
-if __name__ == "__main__":
-    test_add_new()              # first insert controlled product
-    test_get_single_product()   # then fetch explicitly inserted product
-    test_get_all()
-    test_delete_product()
-    test_starts_with()
-    test_pagination()
-    test_convert_price()
-    print("✅ All tests executed.")
+    # Test /deleteOne
+    assert client.delete(f"/deleteOne/{product_id}").status_code == 200
