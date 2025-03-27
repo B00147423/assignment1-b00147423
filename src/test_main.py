@@ -3,10 +3,10 @@ from pymongo import MongoClient
 from pydantic import BaseModel
 BASE_URL = "http://localhost:8000"
 
-client = MongoClient("mongodb://localhost:27017/")
-db = client["inventory_db"]
-collection = db["products"]
 
+client = MongoClient("mongodb://root:example@localhost:27017/?authSource=admin")
+db = client["WebServices"]
+collection = db["products"]
 def get_valid_product_id():
     """Fetch an existing product ID from the database."""
     product = collection.find_one({}, {"_id": 1})
