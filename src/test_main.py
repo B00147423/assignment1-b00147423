@@ -7,17 +7,17 @@ from main import app
 
 client = TestClient(app)
 
+
 def test_endpoints():
-    # Test /addNew with CORRECT field names
     res = client.post("/addNew", json={
-        "ProductID": "test123",  # Must match your API's expected fields
-        "Name": "Test Product",
-        "UnitPrice": 10.99,
-        "StockQuantity": 100,
-        "Description": "Test description"
+        "name": "Test Product",       
+        "category": "Test Category",  
+        "price": 10.99,                
+        "stock": 100,                 
+        "description": "Test description"
     })
     assert res.status_code == 200
-    product_id = res.json().get("ProductID")
+    product_id = res.json()["product"]["_id"]
     # Test /getSingleProduct
     assert client.get(f"/getSingleProduct/{product_id}").status_code == 200
 
