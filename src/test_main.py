@@ -31,13 +31,27 @@ def test_add_new():
     added_product_id = collection.find_one({"name": "Test Product"})["_id"]
 
 def test_get_single_product():
-    product_id = get_valid_product_id()
-    if product_id:
-        response = requests.get(f"{BASE_URL}/getSingleProduct/{product_id}")
-        assert response.status_code == 200
-        assert "name" in response.json()
-    else:
-        print("No product found in DB. Skipping test.")
+    # Fetch existing products first
+    response_all = requests.get(f"{BASE_URL}/getAll")
+    assert response_all.status_code == 200
+
+    products = response_all.json()
+
+    if not products:
+        print("No products in DB. Skipping test.")
+        return
+
+    # Take the first product's existing ID
+    product_id = products[0]["_id"]
+
+    # Test your endpoint
+    response = requests.get(f"{BASE_URL}/getSingleProduct/{product_id}")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["product_id"] == product_id
+    assert "name" in data
+
 
 def test_delete_product():
     product_id = get_valid_product_id()

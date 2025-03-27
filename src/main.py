@@ -33,16 +33,19 @@ def get_single_product(product_id: str = Path(..., title="MongoDB Object ID")):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    # Convert ObjectId to string for JSON serialization
-    product["_id"] = str(product["_id"])
-
+    product["product_id"] = str(product["_id"])  # <- clearly define product_id in response
+    del product["_id"]  # remove raw Mongo _id field to avoid confusion
     return product
+
 
 
 
 @app.get("/getAll")
 def get_all_products():
-    return list(collection.find({}, {"_id": 0}))
+    products = list(collection.find({}))
+    for product in products:
+        product["_id"] = str(product["_id"])
+    return products
 
 @app.post("/addNew")
 def add_new_product(product: Product):
