@@ -33,10 +33,10 @@ def get_single_product(product_id: str = Path(..., title="MongoDB Object ID")):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    product["product_id"] = str(product["_id"])  # <- clearly define product_id in response
-    del product["_id"]  # remove raw Mongo _id field to avoid confusion
-    return product
-
+    # Convert the entire product document, including all fields
+    product["product_id"] = str(product["_id"])
+    del product["_id"]  # Remove the raw _id
+    return product  # This will include name, category, etc.
 
 
 

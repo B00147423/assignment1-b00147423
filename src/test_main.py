@@ -31,27 +31,13 @@ def test_add_new():
     added_product_id = collection.find_one({"name": "Test Product"})["_id"]
 
 def test_get_single_product():
-    # Fetch existing products first
-    response_all = requests.get(f"{BASE_URL}/getAll")
-    assert response_all.status_code == 200
-
-    products = response_all.json()
-
-    if not products:
-        print("No products in DB. Skipping test.")
-        return
-
-    # Take the first product's existing ID
-    product_id = products[0]["_id"]
-
-    # Test your endpoint
-    response = requests.get(f"{BASE_URL}/getSingleProduct/{product_id}")
+    global added_product_id
+    response = requests.get(f"{BASE_URL}/getSingleProduct/{added_product_id}")
     assert response.status_code == 200
     data = response.json()
-
-    assert data["product_id"] == product_id
-    assert "name" in data
-
+    
+    assert str(data["product_id"]) == str(added_product_id)  # Ensure IDs match
+    assert "name" in data  # Make sure name exists in response
 
 def test_delete_product():
     product_id = get_valid_product_id()
@@ -88,9 +74,9 @@ def test_convert_price():
 
 
 if __name__ == "__main__":
+    test_add_new()              # first insert controlled product
+    test_get_single_product()   # then fetch explicitly inserted product
     test_get_all()
-    test_add_new()
-    test_get_single_product()
     test_delete_product()
     test_starts_with()
     test_pagination()
