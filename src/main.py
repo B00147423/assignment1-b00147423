@@ -33,7 +33,11 @@ def get_single_product(product_id: str = Path(..., title="MongoDB Object ID")):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    # Convert ObjectId to string for JSON serialization
+    product["_id"] = str(product["_id"])
+
     return product
+
 
 
 @app.get("/getAll")
