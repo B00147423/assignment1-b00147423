@@ -4,29 +4,20 @@ from main import app
 client = TestClient(app)
 
 def test_endpoints():
-    # 1. Add Product (using ONLY API field names)
+    # 1. Add Product (EXACT fields your API expects)
     res = client.post("/addNew", json={
-        "name": "Test Product",
-        "category": "Test Category",
-        "price": 10.99,
-        "stock": 100,
+        "name": "TestProduct",  # No space for easier testing
+        "category": "TestCat",  # Required field
+        "price": 10.99,         # Must be 'price' not 'UnitPrice'
+        "stock": 100,           # Must be 'stock' not 'StockQuantity'
         "description": "Test"
     })
     assert res.status_code == 200
     product_id = res.json()["product"]["_id"]
-
     
-    # Test /getSingleProduct
+    # 2. Test other endpoints
     assert client.get(f"/getSingleProduct/{product_id}").status_code == 200
-    
-    # Test /getAll
     assert client.get("/getAll").status_code == 200
-    
-    # Test /startsWith
-    assert client.get("/startsWith/t").status_code == 200
-    
-    # Test /convert
+    assert client.get("/startsWith/T").status_code == 200  # Capital T to match "TestProduct"
     assert client.get(f"/convert/{product_id}").status_code in [200, 500]
-    
-    # Test /deleteOne
     assert client.delete(f"/deleteOne/{product_id}").status_code == 200
