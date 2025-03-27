@@ -100,6 +100,9 @@ def convert_price(product_id: str = Path(..., title="MongoDB Object ID")):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    if "price" not in product:  # Check if price exists
+        raise HTTPException(status_code=400, detail="Product has no price field")
+
     response = requests.get("https://api.exchangerate-api.com/v4/latest/USD")
     if response.status_code != 200:
         raise HTTPException(status_code=500, detail="Failed to get exchange rate")
