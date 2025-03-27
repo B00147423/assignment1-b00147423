@@ -11,7 +11,7 @@ client = MongoClient("mongodb://root:example@localhost:27017/?authSource=admin")
 db = client["WebServices"]
 collection = db["products"]
 
-# ✅ Pydantic Model for adding new product
+
 class Product(BaseModel):
     name: str = Field(..., min_length=1)
     category: str = Field(..., min_length=1)
@@ -19,12 +19,11 @@ class Product(BaseModel):
     stock: int = Field(..., ge=0)
     description: str
 
-# ✅ Pydantic Model for pagination parameters
 class PaginationParams(BaseModel):
     start_id: int = Field(..., ge=0)
     end_id: int = Field(..., gt=0)
 
-# ✅ Get a single product (ID validated)
+
 @app.get("/getSingleProduct/{product_id}")
 def get_single_product(product_id: str = Path(..., title="MongoDB Object ID")):
     if not ObjectId.is_valid(product_id):
@@ -36,19 +35,17 @@ def get_single_product(product_id: str = Path(..., title="MongoDB Object ID")):
 
     return product
 
-# ✅ Get all products
+
 @app.get("/getAll")
 def get_all_products():
     return list(collection.find({}, {"_id": 0}))
 
-# ✅ Add a new product
 @app.post("/addNew")
 def add_new_product(product: Product):
     product_dict = product.dict()
     collection.insert_one(product_dict)
     return {"message": "Product added successfully", "product": product_dict}
 
-# ✅ Delete a product by ID
 @app.delete("/deleteOne/{product_id}")
 def delete_product(product_id: str = Path(..., title="MongoDB Object ID")):
     if not ObjectId.is_valid(product_id):
@@ -60,21 +57,27 @@ def delete_product(product_id: str = Path(..., title="MongoDB Object ID")):
 
     return {"message": "Product deleted successfully"}
 
-# ✅ Get products starting with a specific letter
+
 @app.get("/startsWith/{letter}")
 def starts_with(letter: str = Path(..., min_length=1, max_length=1, title="Single letter")):
     products = list(collection.find({"name": {"$regex": f"^{letter}", "$options": "i"}}, {"_id": 0}))
     return products
 
-# ✅ Paginate products by ID range
 @app.get("/paginate")
-def paginate(params: PaginationParams = Depends()):
+def paginate(start_id: str = Query(...), end_id: str = Query(...)):
+    from bson import ObjectId
+
+    if not ObjectId.is_valid(start_id) or not ObjectId.is_valid(end_id):
+        raise HTTPException(status_code=400, detail="Invalid ObjectId format")
+    
+    start = ObjectId(start_id)
+    end = ObjectId(end_id)
+
     products = list(
-        collection.find({"_id": {"$gte": params.start_id, "$lte": params.end_id}}, {"_id": 0}).limit(10)
+        collection.find({"_id": {"$gte": start, "$lte": end}}, {"_id": 0}).limit(10)
     )
     return products
 
-# ✅ Convert price from USD to EUR
 @app.get("/convert/{product_id}")
 def convert_price(product_id: str = Path(..., title="MongoDB Object ID")):
     if not ObjectId.is_valid(product_id):

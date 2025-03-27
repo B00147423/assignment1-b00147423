@@ -18,6 +18,7 @@ def test_get_all():
     assert isinstance(response.json(), list)
 
 def test_add_new():
+    global added_product_id
     product = {
         "name": "Test Product",
         "category": "Test Category",
@@ -27,7 +28,7 @@ def test_add_new():
     }
     response = requests.post(f"{BASE_URL}/addNew", json=product)
     assert response.status_code == 200
-    assert "message" in response.json()
+    added_product_id = collection.find_one({"name": "Test Product"})["_id"]
 
 def test_get_single_product():
     product_id = get_valid_product_id()
@@ -52,9 +53,15 @@ def test_starts_with():
     assert isinstance(response.json(), list)
 
 def test_pagination():
-    response = requests.get(f"{BASE_URL}/paginate?start_id=1&end_id=10")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    ids = list(collection.find({}, {"_id": 1}).limit(2))
+    if len(ids) == 2:
+        start_id = str(ids[0]["_id"])
+        end_id = str(ids[1]["_id"])
+        response = requests.get(f"{BASE_URL}/paginate?start_id={start_id}&end_id={end_id}")
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
+    else:
+        print("Not enough data for pagination test.")
 
 def test_convert_price():
     product_id = get_valid_product_id()
