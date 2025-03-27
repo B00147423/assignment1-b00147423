@@ -43,9 +43,15 @@ def get_all_products():
 @app.post("/addNew")
 def add_new_product(product: Product):
     product_dict = product.dict()
-    collection.insert_one(product_dict)
-    return {"message": "Product added successfully", "product": product_dict}
+    result = collection.insert_one(product_dict)
 
+    # Add Mongo-generated ID back into response, converted to string
+    product_dict["_id"] = str(result.inserted_id)
+
+    return {
+        "message": "Product added successfully",
+        "product": product_dict
+    }
 @app.delete("/deleteOne/{product_id}")
 def delete_product(product_id: str = Path(..., title="MongoDB Object ID")):
     if not ObjectId.is_valid(product_id):
