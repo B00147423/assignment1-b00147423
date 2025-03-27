@@ -71,3 +71,14 @@ def test_convert_price():
         assert "price_in_euro" in response.json()
     else:
         print("No product found in DB. Skipping test.")
+
+
+if __name__ == "__main__":
+    test_get_all()
+    test_add_new()
+    test_get_single_product()
+    test_delete_product()
+    test_starts_with()
+    test_pagination()
+    test_convert_price()
+    print("✅ All tests executed.")
