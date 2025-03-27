@@ -8,16 +8,16 @@ from main import app
 client = TestClient(app)
 
 def test_endpoints():
-    # Test /addNew
+    # Test /addNew with correct payload structure
     res = client.post("/addNew", json={
-        "name": "Test",
-        "unitPrice": 10.99,
-        "stockQuantity": 100,
-        "description": "Test"
+        "ProductID": "123",  # Add required fields
+        "Name": "Test Product",
+        "UnitPrice": 10.99,
+        "StockQuantity": 100,
+        "Description": "Test description"
     })
     assert res.status_code == 200
-    product_id = res.json()["product"]["_id"]
-
+    product_id = res.json()["ProductID"]
     # Test /getSingleProduct
     assert client.get(f"/getSingleProduct/{product_id}").status_code == 200
 
