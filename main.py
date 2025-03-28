@@ -7,7 +7,7 @@ from bson import ObjectId
 app = FastAPI()
 
 # Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017")
+client = MongoClient("mongodb://<admin>:<pass>@localhost:27017/")
 db = client["WebServices"]
 collection = db["products"]
 
