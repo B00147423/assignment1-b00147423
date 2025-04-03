@@ -88,16 +88,16 @@ def starts_with(letter: str = Path(..., min_length=1, max_length=1, title="Singl
 
 @app.get("/paginate")
 def paginate(start_id: str = Query(...), end_id: str = Query(...)):
-    from bson import ObjectId
-
-    if not ObjectId.is_valid(start_id) or not ObjectId.is_valid(end_id):
-        raise HTTPException(status_code=400, detail="Invalid ObjectId format")
-    
-    start = ObjectId(start_id)
-    end = ObjectId(end_id)
-
     products = list(
-        collection.find({"_id": {"$gte": start, "$lte": end}}, {"_id": 0}).limit(10)
+        collection.find(
+            {
+                "Product ID": {
+                    "$gte": start_id,
+                    "$lte": end_id
+                }
+            },
+            {"_id": 0}
+        ).limit(10)
     )
     return products
 
