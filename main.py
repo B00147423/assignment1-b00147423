@@ -59,6 +59,8 @@ def add_new_product(product: Product):
         "message": "Product added successfully",
         "product": product_dict
     }
+
+
 @app.delete("/deleteOne/{product_id}")
 def delete_product(product_id: str = Path(..., title="MongoDB Object ID")):
     if not ObjectId.is_valid(product_id):
@@ -73,8 +75,16 @@ def delete_product(product_id: str = Path(..., title="MongoDB Object ID")):
 
 @app.get("/startsWith/{letter}")
 def starts_with(letter: str = Path(..., min_length=1, max_length=1, title="Single letter")):
+    # Make sure the letter is being received correctly
+    print(f"Searching for products that start with: {letter}")
+
     products = list(collection.find({"name": {"$regex": f"^{letter}", "$options": "i"}}, {"_id": 0}))
+
+    if not products:
+        print("No products found.")
+
     return products
+
 
 @app.get("/paginate")
 def paginate(start_id: str = Query(...), end_id: str = Query(...)):
@@ -100,7 +110,8 @@ def convert_price(product_id: str = Path(..., title="MongoDB Object ID")):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    if "price" not in product:  # Check if price exists
+    price = product.get("price") or product.get("Unit Price")
+    if not price:
         raise HTTPException(status_code=400, detail="Product has no price field")
 
     response = requests.get("https://api.exchangerate-api.com/v4/latest/USD")
@@ -108,5 +119,5 @@ def convert_price(product_id: str = Path(..., title="MongoDB Object ID")):
         raise HTTPException(status_code=500, detail="Failed to get exchange rate")
 
     exchange_rate = response.json()["rates"]["EUR"]
-    converted_price = product["price"] * exchange_rate
+    converted_price = price * exchange_rate
     return {"product_id": product_id, "price_in_euro": round(converted_price, 2)}
